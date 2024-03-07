@@ -1,0 +1,413 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buyer Dashboard</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- <link rel="stylesheet" href="css/m.css">  -->
+    <!-- <link rel="stylesheet" href="css/nav.css">  -->
+    <!-- <link rel="stylesheet" href="css/topnav.css"> -->
+    <style>
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  width: 100%;
+  height: 100vh;
+}
+
+.coordinate {
+  position: absolute;
+  bottom: 10px;
+  right: 50%;
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: #000000;
+  color: #fff;
+  border: 1px solid red;
+  border-radius: 0px;
+}
+
+body {
+margin: 0;
+font-family: Arial, Helvetica, sans-serif;
+}
+
+.topnav {
+overflow: hidden;
+background-color: #005301;
+}
+
+.topnav a {
+float: left;
+display: block;
+color: #f2f2f2;
+text-align: center;
+padding: 14px 16px;
+text-decoration: none;
+font-size: 17px;
+}
+
+.topnav a:hover {
+background-color: #ddd;
+color: black;
+}
+
+.topnav a.active {
+background-color: #04AA6D;
+color: white;
+}
+
+.topnav .icon {
+display: none;
+}
+
+@media screen and (max-width: 600px) {
+.topnav a:not(:first-child) {display: none;}
+.topnav a.icon {
+float: right;
+display: block;
+}
+}
+
+@media screen and (max-width: 600px) {
+.topnav.responsive {position: relative;}
+.topnav.responsive .icon {
+position: absolute;
+right: 0;
+top: 0;
+}
+.topnav.responsive a {
+float: none;
+display: block;
+text-align: left;
+} 
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #34AF6D; 
+}
+table, th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+th {
+  background-color: #f2f2f2;
+}  
+
+/* Hover effect */
+.navigation a:hover,
+.navigation a.active {
+  background-color: #ddd;
+  color: black;
+}
+/* Hover effect */
+.topnav a:hover,
+.topnav a.active {
+  background-color: #ddd;
+  color: black;
+}
+/* Logout link */
+.topnav a.logout {
+  float: right;
+  background-color: transparent;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.topnav a.logout:hover {
+  background-color: red;
+}
+
+
+    </style>
+
+</head>
+<body>
+            <div class="topnav" id="myTopnav">
+                <a href="?page=home" >Home</a>
+                <a href="?page=planted">Planted</a>
+                <a href="?page=harvested">Harvested</a>
+                <a href="?page=crops" >Crops Information</a>
+                <a href="?page=farmers">Farmers Information</a>
+                
+                <a href="javascript:void(0);" class="icon" onclick="myFunction()"><i class="fa fa-bars"></i></a>
+
+                <!-- <a href="login.php" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a> -->
+                
+                <a href="login.php" onclick="confirmLogout(); return false;" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+
+
+            </div>
+
+            <script>
+
+function confirmLogout() {
+    if (confirm("Are you sure you want to logout?")) {
+        window.location.href = "login.php"; 
+    }
+}
+
+function myFunction() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+</script>
+
+    <div class="container"> 
+        <div class="dashboard">
+           
+            <!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="UTF-8" />
+                <title>Farm Locations Map</title>
+                <link rel="stylesheet"href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+                <!-- <link rel="stylesheet" href="css/dash.css"> -->
+                <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+                
+              </head>
+              <body>
+                <div class="map-container">
+                  <div id="map"></div>
+                  <script>
+                     let map;
+                    let polygon;
+                    let circle;
+
+              function initMap() {
+                map = L.map("map").setView([6.7091, 125.2201], 13);
+
+                const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                });
+
+                const googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                  maxZoom: 20,
+                  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                });
+
+                const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                  maxZoom: 20,
+                  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                });
+
+                const baseLayers = {
+                  "OpenStreetMap": osm,
+                  "Google Streets": googleStreets,
+                  "Google Satellite": googleSat
+                };
+      osm.addTo(map);
+      L.control.layers(baseLayers).addTo(map);
+
+                      circle = L.circle([6.7091, 125.2201], {
+                        color: "red",
+                        fillColor: "#f03",
+                        fillOpacity: 0.5,
+                        radius: 500,
+                      }).addTo(map);
+            
+                      polygon = L.polygon([
+                        [6.691, 125.215],
+                        [6.703, 125.167],
+                        [6.693, 125.154],
+                      ]).addTo(map);
+            
+                      const locations = {
+                        Asbang: { lat: 6.681, lng: 125.185, name: "Brgy.Asbang" },
+                        Asinan: { lat: 6.711, lng: 125.206, name: "Brgy.Asinan" },
+                        Bagumbayan: { lat: 6.752, lng: 125.244, name: "Brgy.Bagumbayan" },
+                        Bangkal: { lat: 6.691, lng: 125.215, name: "Brgy.Bangkal" },
+                        Buas: { lat: 6.703, lng: 125.167, name: "Brgy.Buas" },
+                        Buri: { lat: 6.693, lng: 125.154, name: "Brgy.Buri" },
+                        Camanchiles: { lat: 6.754, lng: 125.25, name: "Brgy.Camanchiles" },
+                        Ceboza: { lat: 6.777, lng: 125.233, name: "Brgy.Ceboza" },
+                        Colonsabak: { lat: 6.776, lng: 125.204, name: "Brgy.Colonsabak" },
+                        DonganPekong: {lat: 6.759,lng: 125.24,name: "Brgy.Dongan-Pekong",},
+                        Kabasagan: { lat: 6.701, lng: 125.21, name: "Brgy.Kabasagan" },
+                        Kapok: { lat: 6.718, lng: 125.206, name: "Brgy.Kapok" },
+                        Kauswagan: { lat: 6.681, lng: 125.184, name: "Brgy.Kauswagan" },
+                        Kibao: { lat: 6.784, lng: 125.264, name: "Brgy.Kibao" },
+                        LaSuerte: { lat: 6.705, lng: 125.228, name: "Brgy.La Suerte" },
+                        Langaan: { lat: 6.727, lng: 125.228, name: "Brgy.Langa-an" },
+                        LowerMarber: { lat: 6.73, lng: 125.219, name: "Brgy.Lower Marber" },
+                        Cabligan: { lat: 6.732, lng: 125.311, name: "Brgy.Cabligan" },
+                        Manga: { lat: 6.735, lng: 125.276, name: "Brgy.Manga" },
+                        NewKatipunan: {lat: 6.758,lng: 125.237,name: "Brgy.New Katipunan",},
+                        NewMurcia: { lat: 6.713, lng: 125.187, name: "Brgy.New Murcia" },
+                        NewVisayas: { lat: 6.739, lng: 125.22, name: "Brgy.New Visayas" },
+                        Poblacion: { lat: 6.709, lng: 125.22, name: "Brgy.Poblacion" },
+                        Saboy: { lat: 6.686, lng: 125.229, name: "Brgy.Saboy" },
+                        SanJose: { lat: 6.738, lng: 125.242, name: "Brgy.San Jose" },
+                        SanMiguel: { lat: 6.72, lng: 125.151, name: "Brgy.San Miguel" },
+                        SanVicente: { lat: 6.77, lng: 125.272, name: "Brgy.San Vicente" },
+                        Saub: { lat: 6.685, lng: 125.212, name: "Brgy.Saub" },
+                        Sinaragan: { lat: 6.753, lng: 125.283, name: "Brgy.Sinaragan" },
+                        Sinawilan: { lat: 6.755, lng: 125.239, name: "Brgy.Sinawilan" },
+                        Tamlangon: { lat: 6.722, lng: 125.213, name: "Brgy.Tamlangon" },
+                        Towak: { lat: 6.694, lng: 125.227, name: "Brgy.Towak" },
+                        Tibongbong: { lat: 6.694, lng: 125.24, name: "Brgy.Tibongbong" },
+                        
+                      };
+                      for (const location in locations) {
+                        const farmLocation = locations[location];
+                        L.marker([farmLocation.lat, farmLocation.lng]);
+                        L.marker([farmLocation.lat, farmLocation.lng])
+                          .addTo(map)
+                          .bindPopup(farmLocation.name);
+                      }
+                    }
+            
+                    document.addEventListener("DOMContentLoaded", function (event) {
+                      initMap();
+                    });
+            
+                    document.addEventListener("DOMContentLoaded", function () {
+                      const backButton = document.querySelector(".my-button");
+                      backButton.addEventListener("click", function () {
+                        window.location.href = "dashboard.php";
+                      });
+                    });
+                  </script>
+                </div>
+              </body>
+            </html>
+          
+  
+     <!DOCTYPE html>
+     <html lang="en">
+       <head>
+         <meta charset="UTF-8" />
+         <title>Farm Locations Map</title>
+         <link rel="stylesheet"href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+         <!-- <link rel="stylesheet" href="css/dash.css"> -->
+         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+         
+       </head>
+       <body>
+         <div class="map-container">
+           <div id="map"></div>
+           <script>
+              let map;
+                    let polygon;
+                    let circle;
+
+              function initMap() {
+                map = L.map("map").setView([6.7091, 125.2201], 13);
+
+                const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                });
+
+                const googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                  maxZoom: 20,
+                  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                });
+
+                const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                  maxZoom: 20,
+                  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                });
+
+                const baseLayers = {
+                  "OpenStreetMap": osm,
+                  "Google Streets": googleStreets,
+                  "Google Satellite": googleSat
+                };
+      osm.addTo(map);
+      L.control.layers(baseLayers).addTo(map);
+     
+               circle = L.circle([6.7091, 125.2201], {
+                 color: "red",
+                 fillColor: "#f03",
+                 fillOpacity: 0.5,
+                 radius: 500,
+               }).addTo(map);
+     
+               polygon = L.polygon([
+                 [6.691, 125.215],
+                 [6.703, 125.167],
+                 [6.693, 125.154],
+               ]).addTo(map);
+     
+               const locations = {
+                 Asbang: { lat: 6.681, lng: 125.185, name: "Brgy.Asbang" },
+                 Asinan: { lat: 6.711, lng: 125.206, name: "Brgy.Asinan" },
+                 Bagumbayan: { lat: 6.752, lng: 125.244, name: "Brgy.Bagumbayan" },
+                 Bangkal: { lat: 6.691, lng: 125.215, name: "Brgy.Bangkal" },
+                 Buas: { lat: 6.703, lng: 125.167, name: "Brgy.Buas" },
+                 Buri: { lat: 6.693, lng: 125.154, name: "Brgy.Buri" },
+                 Camanchiles: { lat: 6.754, lng: 125.25, name: "Brgy.Camanchiles" },
+                 Ceboza: { lat: 6.777, lng: 125.233, name: "Brgy.Ceboza" },
+                 Colonsabak: { lat: 6.776, lng: 125.204, name: "Brgy.Colonsabak" },
+                 DonganPekong: {lat: 6.759,lng: 125.24,name: "Brgy.Dongan-Pekong",},
+                 Kabasagan: { lat: 6.701, lng: 125.21, name: "Brgy.Kabasagan" },
+                 Kapok: { lat: 6.718, lng: 125.206, name: "Brgy.Kapok" },
+                 Kauswagan: { lat: 6.681, lng: 125.184, name: "Brgy.Kauswagan" },
+                 Kibao: { lat: 6.784, lng: 125.264, name: "Brgy.Kibao" },
+                 LaSuerte: { lat: 6.705, lng: 125.228, name: "Brgy.La Suerte" },
+                 Langaan: { lat: 6.727, lng: 125.228, name: "Brgy.Langa-an" },
+                 LowerMarber: { lat: 6.73, lng: 125.219, name: "Brgy.Lower Marber" },
+                 Cabligan: { lat: 6.732, lng: 125.311, name: "Brgy.Cabligan" },
+                 Manga: { lat: 6.735, lng: 125.276, name: "Brgy.Manga" },
+                 NewKatipunan: {lat: 6.758,lng: 125.237,name: "Brgy.New Katipunan",},
+                 NewMurcia: { lat: 6.713, lng: 125.187, name: "Brgy.New Murcia" },
+                 NewVisayas: { lat: 6.739, lng: 125.22, name: "Brgy.New Visayas" },
+                 Poblacion: { lat: 6.709, lng: 125.22, name: "Brgy.Poblacion" },
+                 Saboy: { lat: 6.686, lng: 125.229, name: "Brgy.Saboy" },
+                 SanJose: { lat: 6.738, lng: 125.242, name: "Brgy.San Jose" },
+                 SanMiguel: { lat: 6.72, lng: 125.151, name: "Brgy.San Miguel" },
+                 SanVicente: { lat: 6.77, lng: 125.272, name: "Brgy.San Vicente" },
+                 Saub: { lat: 6.685, lng: 125.212, name: "Brgy.Saub" },
+                 Sinaragan: { lat: 6.753, lng: 125.283, name: "Brgy.Sinaragan" },
+                 Sinawilan: { lat: 6.755, lng: 125.239, name: "Brgy.Sinawilan" },
+                 Tamlangon: { lat: 6.722, lng: 125.213, name: "Brgy.Tamlangon" },
+                 Towak: { lat: 6.694, lng: 125.227, name: "Brgy.Towak" },
+                 Tibongbong: { lat: 6.694, lng: 125.24, name: "Brgy.Tibongbong" },
+                 
+               };
+               for (const location in locations) {
+                 const farmLocation = locations[location];
+                 L.marker([farmLocation.lat, farmLocation.lng]);
+                 L.marker([farmLocation.lat, farmLocation.lng])
+                   .addTo(map)
+                   .bindPopup(farmLocation.name);
+               }
+             }
+     
+             document.addEventListener("DOMContentLoaded", function (event) {
+               initMap();
+             });
+     
+             document.addEventListener("DOMContentLoaded", function () {
+               const backButton = document.querySelector(".my-button");
+               backButton.addEventListener("click", function () {
+                 window.location.href = "dashboard.php";
+               });
+             });
+           </script>
+         </div>
+       </body>
+     </html>
+        
+        </div>    
+    </div>
+    
+</body>
+</html>
+
+
